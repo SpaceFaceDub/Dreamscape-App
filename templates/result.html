@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ dream_title }}</h1>
+<p>{{ dream_text }}</p>
+<h3>Your Dream Art:</h3>
+<!-- Spinner displayed until image loads -->
+<div id="spinner" class="text-center">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <p>Generating your dream art, please wait...</p>
+</div>
+<!-- Image is initially hidden -->
+<img id="dreamImage" src="{{ url_for('static', filename='dream_art/' ~ image_filename) }}" alt="Dream Art" class="img-fluid" style="display: none;" onload="hideSpinner()">
+<script>
+  function hideSpinner() {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('dreamImage').style.display = 'block';
+  }
+</script>
+<a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">Generate Another Dream Art</a>
+{% endblock %}

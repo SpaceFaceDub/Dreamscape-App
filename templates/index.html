@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dreamscape Mapper</h1>
+<p>Enter your dream details below to generate a visual interpretation of your dream using DALL·E!</p>
+<form method="post">
+  <div class="mb-3">
+    <label for="dream_title" class="form-label">Dream Title</label>
+    <input type="text" class="form-control" name="dream_title" id="dream_title" placeholder="Enter a title for your dream">
+  </div>
+  <div class="mb-3">
+    <label for="dream_text" class="form-label">Dream Description</label>
+    <textarea class="form-control" name="dream_text" id="dream_text" rows="5" placeholder="Describe your dream..."></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Generate Dream Art</button>
+</form>
+{% endblock %}
