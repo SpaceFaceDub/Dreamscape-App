@@ -8,8 +8,7 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a secure key
 
-# Use the provided fake API key (for demonstration)
-openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY", "sk-proj-fake-placeholder-key")
 
 # Ensure the folder for generated images exists
 GALLERY_FOLDER = os.path.join('static', 'dream_art')
