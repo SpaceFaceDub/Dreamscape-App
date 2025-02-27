@@ -6,9 +6,17 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Replace with a secure key
+app.secret_key = 'your_secret_key_here'
 
-openai.api_key = os.getenv("OPENAI_API_KEY", "sk-proj-fake-placeholder-key")
+# Load API key securely
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# Debug: Check if API key is set
+print("Loaded API Key:", openai.api_key)
+
+if not openai.api_key:
+    print("⚠️ ERROR: OpenAI API Key is missing!")
+    exit(1)  # Stop if key is missing
 
 # Ensure the folder for generated images exists
 GALLERY_FOLDER = os.path.join('static', 'dream_art')
@@ -37,17 +45,13 @@ def save_image_metadata(title, prompt, filename):
 
 def generate_image_prompt(dream_text):
     """
-    Use GPT (via the ChatCompletion API) to generate a vivid, detailed prompt
-    for DALL·E based on the user's dream description.
+    Use GPT-3.5 Turbo to generate a vivid, detailed prompt for DALL·E.
     """
     try:
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": (
-                    "You are an expert prompt engineer for DALL·E. Create a vivid, detailed, artistic image prompt "
-                    "based on the user's dream description that will generate a visually stunning image."
-                )},
+                {"role": "system", "content": "You are an expert at writing AI image prompts. Generate a vivid, detailed artistic description based on the user's dream."},
                 {"role": "user", "content": dream_text}
             ],
             temperature=0.7,
@@ -56,24 +60,25 @@ def generate_image_prompt(dream_text):
         prompt = response['choices'][0]['message']['content'].strip()
         return prompt
     except Exception as e:
-        print(f"Error generating prompt: {e}")
+        print(f"⚠️ Error generating prompt: {e}")
         return dream_text  # Fallback
 
 def generate_dalle_image(prompt):
     """
     Call the DALL·E API to generate an image based on the provided prompt.
-    Here we use a supported size (e.g. "512x512"). Adjust as needed.
     """
     try:
         response = openai.Image.create(
+            model="dall-e-3",  # Ensure using latest model
             prompt=prompt,
             n=1,
-            size="512x512"
+            size="1024x1024",  # Use supported size
+            quality="standard"  # Optional: "hd" for higher quality
         )
         image_url = response['data'][0]['url']
         return image_url
     except Exception as e:
-        print(f"Error generating image: {e}")
+        print(f"⚠️ Error generating image: {e}")
         return None
 
 def download_image(url, filename):
@@ -86,7 +91,7 @@ def download_image(url, filename):
             handler.write(img_data)
         return True
     except Exception as e:
-        print(f"Error downloading image: {e}")
+        print(f"⚠️ Error downloading image: {e}")
         return False
 
 @app.route('/', methods=['GET', 'POST'])
@@ -105,17 +110,18 @@ def index():
         # Generate an image with DALL·E
         image_url = generate_dalle_image(image_prompt)
         if not image_url:
-            flash("There was an error generating the image. Please try again.", "danger")
+            flash("⚠️ Error: Failed to generate image.", "danger")
             return redirect(url_for('index'))
         
-        # Create a unique filename based on the current timestamp
+        # Create a unique filename based on timestamp
         filename = f"{int(datetime.utcnow().timestamp())}.png"
         filepath = os.path.join(GALLERY_FOLDER, filename)
+        
         if not download_image(image_url, filepath):
-            flash("Failed to download the generated image.", "danger")
+            flash("⚠️ Error: Failed to download the image.", "danger")
             return redirect(url_for('index'))
         
-        # Save metadata for gallery history
+        # Save metadata
         save_image_metadata(dream_title, image_prompt, filename)
         
         return render_template('result.html', 
@@ -133,7 +139,7 @@ def gallery():
             try:
                 data = json.load(f)
             except Exception as e:
-                print("Error loading gallery data:", e)
+                print("⚠️ Error loading gallery data:", e)
     return render_template("gallery.html", images=data)
 
 if __name__ == '__main__':
